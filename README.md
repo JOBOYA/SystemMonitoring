@@ -7,8 +7,7 @@ This project provides a system monitoring dashboard that displays real-time info
 To install the System Monitoring project, follow these steps:
 Clone the project using git clone:
 ```bash
-  git clone https://github.com/your-username/system-monitoring.git
-
+  git clone https://github.com/JOBOYA/SystemMonitoring.git
 ```
 
 Navigate to the project directory:
