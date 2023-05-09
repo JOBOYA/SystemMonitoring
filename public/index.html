@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Température GPU</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        canvas {
+            max-width: 600px;
+            max-height: 300px;
+        }
+    </style>
+</head>
+
+<body style="background-color: #1a1a1a; color: #fff;">
+    <h1 style="text-align:center; color: #fff;">System Monitoring</h1>
+    <div class="flex-container">
+        <div class="card">
+            <h2 style="text-align:center; color: #fff;">GPU Temperature</h2>
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        <div class="card">
+            <h2 style="text-align:center; color: #fff;">RAM Usage</h2>
+            <canvas id="ramUsageChart"></canvas>
+        </div>
+        <div class="card">
+            <h2 style="text-align:center; color: #fff;">Connection Statistics</h2>
+            <canvas id="connectionChart"></canvas>
+        </div>
+        <div class="card">
+            <h2 style="text-align:center; color: #fff;">CPU Temperature</h2>
+            <canvas id="cpuTemperatureChart"></canvas>
+
+
+
+        </div>
+        <div class="card">
+            <h2 style="text-align:center; color: #fff;">Storage</h2>
+            <canvas id="storageChart"></canvas>
+        </div>
+
+
+        <script>
+            // create a new WebSocket object
+            const ramCtx = document.getElementById('ramUsageChart').getContext('2d');
+            const socket = io();
+            const ctx = document.getElementById('temperatureChart').getContext('2d');
+            const cpuTemperature = document.getElementById('cpuTemperatureChart').getContext('2d');
+
+            const labels = [];
+            const data = [];
+            const config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Température GPU (°C)',
+                        data: data,
+                        //borderColor purple
+                        borderColor: 'rgba(123, 50, 255, 1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        //backgroun purple
+                        backgroundColor: 'rgba(123, 50, 255, 0.2)',
+                        borderSkipped: 'bottom',
+                        tension: 0.1,
+                        fill: true,
+                        cubicInterpolationMode: 'monotone',
+
+
+
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            beginAtZero: true,
+
+
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            enabled: true,
+                            intersect: false,
+                            mode: 'nearest',
+
+                        },
+                        annotation: {
+                            annotations: [{
+                                type: 'line',
+                                id: 'vline',
+                                mode: 'vertical',
+                                scaleID: 'x',
+                                value: null,
+                                borderColor: 'rgba(0, 0, 0, 0.5)',
+                                borderWidth: 1,
+                                display: false,
+
+                            }]
+                        }
+                    },
+                    hover: {
+                        onHover: function (event) {
+                            const elements = this.getElementsAtEventForMode(event, 'nearest', { intersect: false }, true);
+                            const mouseX = this.chartArea.left + this.scales.x.getPixelForValue(this.data.labels[this.active[0]?.index || 0]);
+                            if (elements.length) {
+                                const annotation = this.options.plugins.annotation.annotations[0];
+                                annotation.value = mouseX;
+                                annotation.display = true;
+                            } else {
+                                this.options.plugins.annotation.annotations[0].display = false;
+                            }
+                            this.update();
+                        }
+                    }
+                }
+            };
+
+            const temperatureChart = new Chart(ctx, config);
+
+            socket.on('gpuTemperature', (temperature) => {
+                const now = new Date();
+                const time = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+                labels.push(time);
+                data.push(temperature);
+
+                temperatureChart.update();
+            });
+            ctx.canvas.addEventListener('mouseleave', () => {
+                const annotation = temperatureChart.options.plugins.annotation.annotations[0];
+                annotation.display = false;
+                temperatureChart.update();
+            });
+
+            // Configurez le graphique donut
+            const ramUsageConfig = {
+                type: 'doughnut',
+                data: {
+                    labels: ['Utilisé', 'Libre'],
+                    datasets: [{
+                        data: [0, 100], // Initialiser à 0% utilisé, 100% libre
+                        backgroundColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 255, 255, 1)'], // Modifiez cette ligne pour utiliser une couleur bleue
+                        borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 255, 255, 1)'], // Modifiez cette ligne pour utiliser une couleur bleue
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    cutout: '80%',
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label;
+                                    return `${label}: ${context.formattedValue} %`;
+
+                                }
+                            }
+
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            formatter: function (value, context) {
+                                if (context.dataIndex === 0) {
+                                    return `${value.toFixed(2)}%`;
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                }
+            };
+
+
+
+            // Créez le graphique donut
+            const ramUsageChart = new Chart(ramCtx, ramUsageConfig);
+
+            socket.on('gpuTemperature', (temperature) => {
+                // (Le code pour mettre à jour les données de température reste inchangé)
+            });
+
+            // Mettez à jour les données du graphique donut avec le pourcentage d'utilisation de la RAM
+            socket.on('ramUsage', (ramUsagePercentage) => {
+                ramUsageConfig.data.datasets[0].data = [ramUsagePercentage, 100 - ramUsagePercentage];
+                ramUsageChart.update();
+            });
+
+
+            // Configurez le graphique de connexion
+            const connectionCtx = document.getElementById('connectionChart').getContext('2d');
+            const connectionLabels = [];
+            const connectionDataUp = [];
+            const connectionDataDown = [];
+
+            const connectionConfig = {
+                type: 'line',
+                data: {
+                    labels: connectionLabels,
+                    datasets: [
+                        {
+                            label: 'Connexion ascendante',
+                            data: connectionDataUp,
+                            borderColor: 'rgba(0, 255, 0, 1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                            tension: 0.1,
+                            fill: true,
+                        },
+                        {
+                            label: 'Connexion descendante',
+                            data: connectionDataDown,
+                            borderColor: 'rgba(255, 0, 0, 1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                            tension: 0.1,
+                            fill: true,
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            enabled: true,
+                            intersect: false,
+                            mode: 'nearest',
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label;
+                                    const value = context.formattedValue;
+                                    return `${label}: ${value} Kbps`;
+                                }
+                            }
+                        },
+                    },
+                    hover: {
+                        onHover: function (event) {
+                            const elements = this.getElementsAtEventForMode(event, 'nearest', { intersect: false }, true);
+                            const mouseX = this.chartArea.left + this.scales.x.getPixelForValue(this.data.labels[this.active[0]?.index || 0]);
+                            if (elements.length) {
+                                const annotation = this.options.plugins.annotation.annotations[0];
+                                annotation.value = mouseX;
+                                annotation.display = true;
+                            } else {
+                                this.options.plugins.annotation.annotations[0].display = false;
+                            }
+                            this.update();
+                        }
+                    }
+                }
+            };
+
+            const connectionChart = new Chart(connectionCtx, connectionConfig);
+
+            socket.on('connectionData', (up, down) => {
+                const now = new Date();
+                const time = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+                connectionLabels.push(time);
+                connectionDataUp.push(up);
+                connectionDataDown.push(down);
+
+                connectionChart.update();
+            });
+
+
+            //cpu 
+            // Configure the CPU temperature chart
+            const cpuTemperatureCtx = document.getElementById('cpuTemperatureChart').getContext('2d');
+            const cpuTemperatureLabels = [];
+            const cpuTemperatureData = [];
+            const cpuTemperatureConfig = {
+                type: 'line',
+                data: {
+                    labels: cpuTemperatureLabels,
+                    datasets: [
+                        {
+                            label: 'Température du CPU',
+                            data: cpuTemperatureData,
+                            borderColor: 'rgba(255, 0, 0, 1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                            tension: 0.1,
+                            fill: true,
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            enabled: true,
+                            intersect: false,
+                            mode: 'nearest',
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label;
+                                    const value = context.formattedValue;
+                                    return `${label}: ${value} °C`;
+                                }
+                            }
+                        },
+                    },
+                    hover: {
+                        onHover: function (event) {
+                            const elements = this.getElementsAtEventForMode(event, 'nearest', { intersect: false }, true);
+                            const mouseX = this.chartArea.left + this.scales.x.getPixelForValue(this.data.labels[this.active[0]?.index || 0]);
+                            if (elements.length) {
+                                const annotation = this.options.plugins.annotation.annotations[0];
+                                annotation.value = mouseX;
+                                annotation.display = true;
+                            } else {
+                                this.options.plugins.annotation.annotations[0].display = false;
+                            }
+                            this.update();
+                        }
+                    }
+                }
+            };
+            const cpuTemperatureChart = new Chart(cpuTemperatureCtx, cpuTemperatureConfig);
+
+            socket.on('cpuTemperature', function (temperature) {
+                console.log('CPU Temperature received:', temperature); // Ajout de cette ligne
+                const time = new Date().toLocaleTimeString();
+                cpuTemperatureChart.data.labels.push(time);
+                cpuTemperatureChart.data.datasets[0].data.push(temperature);
+                cpuTemperatureChart.update();
+            });
+
+
+
+
+
+
+
+        </script>
+</body>
+
+</html>
