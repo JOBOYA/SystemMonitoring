@@ -57,18 +57,17 @@ async function getConnectionData() {
   }
 }
 
-
-
-async function getCpuTemperature() {
+async function getCpuUsageData() {
   try {
-    const cpuTemperature = await si.cpuTemperature();
-    if (cpuTemperature && cpuTemperature.main && cpuTemperature.main > 0) {
-      io.emit('cpuTemperature', cpuTemperature.main);
-    }
+    const cpuData = await si.currentLoad();
+    const cpuUsagePercentage = cpuData.currentLoad;
+    console.log(`Temperature du CPU: ${cpuUsagePercentage.toFixed(2)}%`);
+    io.emit('cpuUsage', cpuUsagePercentage.toFixed(2)); // Envoyer les données d'utilisation du CPU via Socket.io
   } catch (error) {
-    console.error(`Erreur lors de la récupération des données de température du CPU: ${error.message}`);
+    console.error(`Erreur lors de la récupération des données d'utilisation du CPU: ${error.message}`);
   }
 }
+
 
 
 
@@ -77,6 +76,7 @@ setInterval(() => {
   getTemperatureData();
   getRamUsageData();
   getConnectionData(); 
-  getCpuTemperature();
+  getCpuUsageData();
+ 
   
 }, 5000);

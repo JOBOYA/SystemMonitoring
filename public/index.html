@@ -344,13 +344,14 @@
             };
             const cpuTemperatureChart = new Chart(cpuTemperatureCtx, cpuTemperatureConfig);
 
-            socket.on('cpuTemperature', function (temperature) {
-                console.log('CPU Temperature received:', temperature); // Ajout de cette ligne
-                const time = new Date().toLocaleTimeString();
-                cpuTemperatureChart.data.labels.push(time);
-                cpuTemperatureChart.data.datasets[0].data.push(temperature);
-                cpuTemperatureChart.update();
-            });
+            socket.on('cpuUsage', function (cpuUsage) {
+    console.log('CPU Usage received:', cpuUsage); 
+    const time = new Date().toLocaleTimeString();
+    cpuTemperatureChart.data.labels.push(time);
+    cpuTemperatureChart.data.datasets[0].data.push(cpuUsage);
+    cpuTemperatureChart.update();
+});
+
 
 
 
