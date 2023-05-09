@@ -4,34 +4,27 @@ This project provides a system monitoring dashboard that displays real-time info
 
 ## Installation
 
-Install SystemMonitoring with npm
-
+To install the System Monitoring project, follow these steps:
+Clone the project using git clone:
 ```bash
   git clone https://github.com/your-username/system-monitoring.git
 
 ```
-    
-## Run Locally
 
-Clone the project
-
-```bash
-  git clone https://link-to-project
-```
-
-Go to the project directory
+Navigate to the project directory:
 
 ```bash
  cd system-monitoring
 
 ```
 
-Install dependencies
+Install dependencies using npm:
 
 ```bash
   npm install
 ```
 
+## Run Locally
 Start the server
 
 ```bash
@@ -39,7 +32,7 @@ Start the server
 ```
 
 
-## Demo
+Navigate to http://localhost:5000 in your web browser to view the dashboard.
 
 This will start the server on port 5000. To view the dashboard, open a web browser and navigate to http://localhost:5000.
 ## Screenshots
