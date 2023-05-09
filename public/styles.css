@@ -38,6 +38,15 @@ canvas {
     transition: 0.5s;
 }
 
+.gradient-text {
+    font-size: 20px;
+    background: -webkit-linear-gradient(left, rgb(141, 130, 238), rgb(77, 48, 100));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+    text-align: center;
+   
+  }
 
 /***************  MEDIA***************/ 
 
